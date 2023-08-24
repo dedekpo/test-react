@@ -17,13 +17,13 @@ export default function Search({
 	const [isTyping, setIsTyping] = useState(false);
 	const [isError, setIsError] = useState(false);
 
-	async function handleSubmit(e: any) {
+	async function handleFetch(countryName?: string) {
 		setIsSearching(true);
-		e.preventDefault();
-		console.log("fetching");
+		handleBlur();
 		try {
+			const searchFilter = countryName || search;
 			const response = await fetch(
-				`https://test-api-production-3be5.up.railway.app/universities/${search}`,
+				`https://test-api-production-3be5.up.railway.app/universities/${searchFilter}`,
 				{
 					method: "GET",
 					headers: {
@@ -33,6 +33,7 @@ export default function Search({
 			);
 			const data = await response.json();
 			setUniversities(data);
+			console.log("setting universities ", searchFilter, data.length);
 			setIsError(false);
 			setIsSearching(false);
 		} catch (error) {
@@ -40,6 +41,11 @@ export default function Search({
 			setIsError(true);
 			setUniversities([]);
 		}
+	}
+
+	async function handleSubmit(e: any) {
+		e.preventDefault();
+		await handleFetch();
 	}
 
 	function handleFocus() {
@@ -82,10 +88,11 @@ export default function Search({
 					</div>
 					<div className="relative">
 						<input
+							id="search"
 							type="text"
 							name="search"
-							id="search"
 							value={search}
+							autoComplete="off"
 							className="border-2 rounded-md px-2 py-1"
 							placeholder="Insert country"
 							disabled={isSearching}
@@ -97,6 +104,7 @@ export default function Search({
 							<SearchField
 								search={search}
 								setSearch={setSearch}
+								handleFetch={handleFetch}
 							/>
 						)}
 					</div>
@@ -125,9 +133,11 @@ export default function Search({
 function SearchField({
 	search,
 	setSearch,
+	handleFetch,
 }: {
 	search: string;
 	setSearch: React.Dispatch<React.SetStateAction<string>>;
+	handleFetch: (countryName: string) => void;
 }) {
 	const [filteredCountries, setFilteredCountries] = useState<Country[]>([]);
 
@@ -145,7 +155,10 @@ function SearchField({
 				<div
 					key={index}
 					className="hover:bg-gray-100 p-2 cursor-pointer"
-					onClick={() => setSearch(country.name)}
+					onClick={() => {
+						setSearch(country.name);
+						handleFetch(country.name);
+					}}
 				>
 					{country.name}
 				</div>
